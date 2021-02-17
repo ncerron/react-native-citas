@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   Text,
   StyleSheet,
@@ -11,22 +11,34 @@ import {
 } from 'react-native';
 import Cita from './componentes/cita';
 import Formulario from './componentes/Formulario';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const App = () => {
   //difinir el state de citas
-  const [citas, setCitas] = useState([
-    {id: '1', paciente: 'Hook', propietario: 'Juan', sintomas: 'No Come'},
-    {id: '2', paciente: 'Redux', propietario: 'Itzel', sintomas: 'No Duerme'},
-    {id: '3', paciente: 'Native', propietario: 'Josue', sintomas: 'No Canta'},
-  ]);
+  const [citas, setCitas] = useState([]);
 
   const [mostrarForm, guardarMostrarForm] = useState(false);
 
+  useEffect(() => {
+    const obtenerCitaStorage = async () => {
+      try {
+        const citasStorage = await AsyncStorage.getItem('citas');
+
+        if (citasStorage) {
+          setCitas(JSON.parse(citasStorage));
+        }
+      } catch (error) {
+        console, log(error);
+      }
+    };
+    obtenerCitaStorage();
+  }, []);
+
   //Elimina pacientes del state
   const eliminarPaciente = (id) => {
-    setCitas((citasActuales) => {
-      return citasActuales.filter((cita) => cita.id !== id);
-    });
+    const citasFiltradas = citas.filter((cita) => cita.id !== id);
+    setCitas(citasFiltradas);
+    guardarCitasStorage(JSON.stringify(citasFiltradas));
   };
 
   //muestra u oculta el formulario
@@ -37,6 +49,15 @@ const App = () => {
   //ocultar teclado
   const cerrarTeclado = () => {
     Keyboard.dismiss();
+  };
+
+  //almacenar citas en storage
+  const guardarCitasStorage = async (citasJSON) => {
+    try {
+      await AsyncStorage.setItem('citas', citasJSON);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -64,6 +85,7 @@ const App = () => {
                 citas={citas}
                 setCitas={setCitas}
                 guardarMostrarForm={guardarMostrarForm}
+                guardarCitasStorage={guardarCitasStorage}
               />
             </>
           ) : (
